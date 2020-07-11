@@ -1,0 +1,40 @@
+//onChange Client Script
+
+function onChange(control, oldValue, newValue, isLoading, isTemplate) {
+    if (newValue === '') {
+        return;
+    }
+
+    var ajax = new GlideAjax('AjaxIncidentCaller');
+    ajax.addParam('sysparm_name', 'changeCaller');
+    ajax.addParam('sysparm_callerSysID', newValue);
+    ajax.getXML(getCallerIDCallBack);
+
+    function getCallerIDCallBack(response) {
+        var answer = JSON.parse(response.responseXML.documentElement.getAttribute("answer"));
+        if (answer) {
+            g_form.setValue('u_manager', answer.callerManager);
+            g_form.setValue('short_description', answer.location);
+            g_form.setValue('description', answer.department);
+        }
+    }
+}
+
+//Script Include
+var AjaxIncidentCaller = Class.create();
+AjaxIncidentCaller.prototype = Object.extendsObject(AbstractAjaxProcessor, {
+
+    changeCaller: function() {
+
+        var obj = {};
+        var getUser = GlideRecord('sys_user');
+        if (getUser.get(this.getParameter('sysparm_callerSysID'))) {
+            obj.callerManager = getUser.getValue('manager');
+            obj.location = getUser.getDisplayValue('location');
+            obj.department = getUser.getDisplayValue('department');
+        }
+        return JSON.stringify(obj);
+    },
+
+    type: 'AjaxIncidentCaller'
+});
